@@ -2,9 +2,14 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Jogo do Yani</title>
     <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
         body {
             margin: 0;
             padding: 0;
@@ -13,30 +18,38 @@
             background-color: #f0f8ff;
             touch-action: manipulation;
             user-select: none;
+            height: 100vh;
+            width: 100vw;
         }
         
         #game-container {
             position: relative;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
+            touch-action: none;
         }
         
         #ground {
             position: absolute;
             bottom: 0;
             width: 100%;
-            height: 20px;
+            height: 5vh;
+            min-height: 20px;
             background-color: #2e8b57;
             z-index: 10;
         }
         
         #yani {
             position: absolute;
-            bottom: 20px;
-            left: 50px;
-            width: 50px;
-            height: 50px;
+            bottom: 5vh;
+            left: 15vw;
+            width: 12vw;
+            height: 12vw;
+            min-width: 50px;
+            min-height: 50px;
+            max-width: 70px;
+            max-height: 70px;
             background-color: #ff69b4;
             display: flex;
             align-items: center;
@@ -47,39 +60,43 @@
             z-index: 20;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             transition: transform 0.1s;
+            font-size: min(4vw, 20px);
         }
         
         .obstacle {
             position: absolute;
-            bottom: 20px;
-            width: 25px;
+            bottom: 5vh;
+            width: 6vw;
+            min-width: 25px;
+            max-width: 40px;
             background-color: #8b4513;
             z-index: 15;
             border-radius: 5px 5px 0 0;
         }
         
         .high-obstacle {
-            height: 100px;
+            height: 20vh;
         }
         
         .medium-obstacle {
-            height: 70px;
+            height: 15vh;
         }
         
         .low-obstacle {
-            height: 40px;
+            height: 10vh;
         }
         
         #score {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 20px;
+            top: 2vh;
+            right: 4vw;
+            font-size: min(5vw, 24px);
             color: #333;
             background-color: rgba(255, 255, 255, 0.7);
-            padding: 5px 15px;
+            padding: 1vh 3vw;
             border-radius: 20px;
             z-index: 30;
+            text-align: center;
         }
         
         #game-over, #win-message {
@@ -88,13 +105,14 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background-color: rgba(255, 255, 255, 0.95);
-            padding: 25px;
+            padding: 4vw;
             border-radius: 15px;
             text-align: center;
             display: none;
             z-index: 100;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
-            max-width: 80%;
+            width: 80%;
+            max-width: 400px;
             animation: fadeIn 0.5s;
         }
         
@@ -105,46 +123,97 @@
         
         #game-over h2, #win-message h2 {
             color: #ff69b4;
-            margin-bottom: 20px;
-            font-size: 1.3em;
+            margin-bottom: 2vh;
+            font-size: min(5vw, 22px);
+            line-height: 1.4;
         }
         
         #restart-btn, #continue-btn {
-            margin-top: 15px;
-            padding: 10px 20px;
+            margin-top: 2vh;
+            padding: 1.5vh 5vw;
             background-color: #ff69b4;
             border: none;
             border-radius: 25px;
             color: white;
             font-weight: bold;
             cursor: pointer;
-            font-size: 0.9em;
+            font-size: min(4vw, 18px);
             transition: all 0.3s;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 200px;
         }
         
         #audio-control {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 8px 15px;
+            top: 2vh;
+            left: 4vw;
+            padding: 1vh 4vw;
             background-color: rgba(51, 51, 51, 0.7);
             color: white;
             border: none;
             border-radius: 25px;
             cursor: pointer;
             z-index: 30;
-            font-size: 0.9em;
+            font-size: min(4vw, 18px);
+        }
+        
+        #jump-btn {
+            position: absolute;
+            bottom: 8vh;
+            right: 5vw;
+            width: 20vw;
+            height: 20vw;
+            max-width: 100px;
+            max-height: 100px;
+            min-width: 60px;
+            min-height: 60px;
+            background-color: rgba(255, 105, 180, 0.3);
+            border: 2px solid rgba(255, 105, 180, 0.7);
+            border-radius: 50%;
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: min(5vw, 24px);
+            font-weight: bold;
+        }
+        
+        @media (orientation: landscape) {
+            #yani {
+                left: 50px;
+                width: 50px;
+                height: 50px;
+                font-size: 16px;
+            }
+            
+            .obstacle {
+                width: 25px;
+            }
+            
+            #score {
+                font-size: 18px;
+            }
+            
+            #jump-btn {
+                width: 15vh;
+                height: 15vh;
+                max-width: 80px;
+                max-height: 80px;
+            }
         }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <button id="audio-control">🔊 Desligar Som</button>
+        <button id="audio-control">🔊</button>
         <div id="score">0m</div>
         
         <div id="yani">YANI</div>
         <div id="ground"></div>
+        
+        <div id="jump-btn">Pular</div>
         
         <div id="game-over">
             <h2 id="motivational-message">Não desista, você é muita foda e vai conseguir ❤</h2>
@@ -173,6 +242,7 @@
         const audioControl = document.getElementById('audio-control');
         const bgMusic = document.getElementById('bg-music');
         const motivationalMessage = document.getElementById('motivational-message');
+        const jumpBtn = document.getElementById('jump-btn');
         
         // Variáveis do jogo
         let isJumping = false;
@@ -183,6 +253,7 @@
         let musicEnabled = true;
         let gameInterval;
         let obstacleInterval;
+        let touchStartY = 0;
         
         // Mensagens motivacionais
         const motivationalMessages = [
@@ -193,8 +264,8 @@
             "HOJE É SEU DIA! VOCÊ VAI CONSEGUIR! 🌈"
         ];
         
-        // Configurações - PULO AUMENTADO
-        const JUMP_HEIGHT = 180; // Aumentado de 120 para 180
+        // Configurações
+        const JUMP_HEIGHT = 180;
         const JUMP_DURATION = 800;
         const OBSTACLE_INTERVAL = 2200;
         const WIN_SCORE = 5000;
@@ -207,10 +278,10 @@
             musicEnabled = !musicEnabled;
             if (musicEnabled) {
                 bgMusic.play();
-                audioControl.textContent = '🔊 Desligar Som';
+                audioControl.textContent = '🔊';
             } else {
                 bgMusic.pause();
-                audioControl.textContent = '🔊 Ligar Som';
+                audioControl.textContent = '🔇';
             }
         });
         
@@ -230,7 +301,7 @@
             obstacles = [];
             
             // Resetar posição do Yani
-            yani.style.bottom = '20px';
+            yani.style.bottom = '5vh';
             yani.style.transform = 'scale(1)';
             
             // Esconder telas de game over/vitória
@@ -251,12 +322,6 @@
             
             // Loop do jogo
             gameLoop();
-            
-            // Controles
-            gameContainer.onclick = jump;
-            document.onkeydown = (e) => {
-                if (e.code === 'Space') jump();
-            };
         }
         
         // Loop principal do jogo
@@ -270,7 +335,7 @@
             gameInterval = requestAnimationFrame(gameLoop);
         }
         
-        // Pular - AGORA MAIS ALTO
+        // Pular
         function jump() {
             if (isJumping || isGameOver) return;
             
@@ -284,17 +349,17 @@
                 if (progress < 0.5) {
                     // Subida
                     const jumpHeight = JUMP_HEIGHT * (progress * 2);
-                    yani.style.bottom = `${20 + jumpHeight}px`;
+                    yani.style.bottom = `calc(5vh + ${jumpHeight}px)`;
                 } else {
                     // Descida
                     const fallHeight = JUMP_HEIGHT * ((progress - 0.5) * 2);
-                    yani.style.bottom = `${20 + JUMP_HEIGHT - fallHeight}px`;
+                    yani.style.bottom = `calc(5vh + ${JUMP_HEIGHT - fallHeight}px)`;
                 }
                 
                 if (progress < 1) {
                     requestAnimationFrame(animateJump);
                 } else {
-                    yani.style.bottom = '20px';
+                    yani.style.bottom = '5vh';
                     isJumping = false;
                 }
             }
@@ -309,12 +374,12 @@
             const obstacle = document.createElement('div');
             obstacle.className = 'obstacle';
             
-            // Tipos de obstáculos (todos podem ser pulados agora)
+            // Tipos de obstáculos
             const obstacleTypes = ['low-obstacle', 'medium-obstacle', 'high-obstacle'];
             const randomType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
             obstacle.classList.add(randomType);
             
-            obstacle.style.right = '-25px';
+            obstacle.style.right = '-6vw';
             gameContainer.appendChild(obstacle);
             
             obstacles.push({
@@ -334,7 +399,6 @@
                 // Verificar se o jogador passou pelo obstáculo
                 if (!obstacle.passed && newRight < parseInt(yani.style.left)) {
                     obstacle.passed = true;
-                    // Dar mais pontos para obstáculos mais altos
                     score += obstacle.type === 'high-obstacle' ? 200 : 
                             obstacle.type === 'medium-obstacle' ? 150 : 100;
                 }
@@ -347,9 +411,9 @@
             });
         }
         
-        // Verificar colisões - AGORA SÓ COLIDE SE NÃO PULAR
+        // Verificar colisões
         function checkCollisions() {
-            if (isJumping) return; // Não colide enquanto estiver pulando
+            if (isJumping) return;
             
             const yaniRect = yani.getBoundingClientRect();
             
@@ -412,6 +476,24 @@
             gameLoop();
         };
         
+        // Controles mobile
+        jumpBtn.addEventListener('click', jump);
+        
+        // Controle por toque na tela
+        gameContainer.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchStartY = e.touches[0].clientY;
+            jump();
+        });
+        
+        // Controle por teclado (para desktop)
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                jump();
+            }
+        });
+        
         // Iniciar o jogo
         window.addEventListener('load', () => {
             const playMusic = () => {
@@ -426,6 +508,14 @@
             document.addEventListener('click', playMusic, { once: true });
             
             startGame();
+        });
+        
+        // Ajustar para orientação da tela
+        window.addEventListener('resize', () => {
+            // Atualizar posição do Yani se necessário
+            if (!isJumping) {
+                yani.style.bottom = '5vh';
+            }
         });
     </script>
 </body>
