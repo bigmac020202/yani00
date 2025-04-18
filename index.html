@@ -178,7 +178,6 @@
             touch-action: manipulation;
         }
         
-        /* Ajuste para telas muito pequenas */
         @media (max-height: 500px) {
             #yani {
                 font-size: 50%;
@@ -193,7 +192,6 @@
             }
         }
         
-        /* Orientação paisagem */
         @media (orientation: landscape) {
             #yani {
                 left: 10%;
@@ -307,20 +305,25 @@
             }
         });
         
-        // Iniciar jogo
-        function startGame() {
-            // Limpar intervalos anteriores
+        // Função para limpar completamente o jogo
+        function resetGame() {
+            // Parar todos os intervalos e animações
             clearInterval(obstacleInterval);
             cancelAnimationFrame(gameInterval);
             
-            // Resetar estado do jogo
+            // Remover todos os obstáculos
+            obstacles.forEach(obstacle => {
+                if (obstacle.element && obstacle.element.parentNode) {
+                    obstacle.element.remove();
+                }
+            });
+            obstacles = [];
+            
+            // Resetar variáveis do jogo
+            isJumping = false;
             isGameOver = false;
             score = 0;
             gameSpeed = 3;
-            
-            // Remover obstáculos antigos
-            obstacles.forEach(obstacle => obstacle.element.remove());
-            obstacles = [];
             
             // Resetar posição do Yani
             yani.style.bottom = '8%';
@@ -332,6 +335,11 @@
             
             // Atualizar pontuação
             scoreElement.textContent = '0m';
+        }
+        
+        // Iniciar jogo
+        function startGame() {
+            resetGame();
             
             // Iniciar música
             if (musicEnabled) {
@@ -490,13 +498,13 @@
         }
         
         // Eventos dos botões
-        restartBtn.onclick = startGame;
-        continueBtn.onclick = () => {
+        restartBtn.addEventListener('click', startGame);
+        continueBtn.addEventListener('click', () => {
             winMessage.style.display = 'none';
             isGameOver = false;
             if (musicEnabled) bgMusic.play();
             gameLoop();
-        };
+        });
         
         // Controles mobile
         jumpBtn.addEventListener('click', jump);
