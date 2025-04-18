@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo do Yani</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+            background-color: #f0f8ff;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        #ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 20px;
+            background-color: #2e8b57;
+            z-index: 10;
+        }
+        
+        #yani {
+            position: absolute;
+            bottom: 20px;
+            left: 50px;
+            width: 60px;
+            height: 60px;
+            background-color: #ff69b4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            border-radius: 5px;
+            z-index: 20;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.1s;
+        }
+        
+        .obstacle {
+            position: absolute;
+            bottom: 20px;
+            width: 30px;
+            background-color: #8b4513;
+            z-index: 15;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        #score {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 5px 15px;
+            border-radius: 20px;
+            z-index: 30;
+        }
+        
+        #game-over, #win-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+            max-width: 80%;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        #game-over h2, #win-message h2 {
+            color: #ff69b4;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        #restart-btn, #continue-btn {
+            margin-top: 15px;
+            padding: 12px 25px;
+            background-color: #ff69b4;
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        #restart-btn:hover, #continue-btn:hover {
+            background-color: #ff1493;
+            transform: scale(1.05);
+        }
+        
+        #audio-control {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 8px 15px;
+            background-color: rgba(51, 51, 51, 0.7);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 30;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        #audio-control:hover {
+            background-color: rgba(51, 51, 51, 1);
+        }
+        
+        .cloud {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            z-index: 5;
+        }
+        
+        #shake-container {
+            transition: transform 0.1s;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <button id="audio-control">🔊 Desligar Som</button>
+        <div id="score">0m</div>
+        
+        <div id="yani">YANI</div>
+        <div id="ground"></div>
+        
+        <div id="game-over">
+            <h2 id="motivational-message">Não desista, você é muita foda e vai conseguir ❤</h2>
+            <button id="restart-btn">Jogar Novamente</button>
+        </div>
+        
+        <div id="win-message">
+            <h2>Você conseguiu, parabéns ❤</h2>
+            <button id="continue-btn">Continuar Jogando</button>
+        </div>
+    </div>
+    
+    <audio id="bg-music" loop>
+        <source src="musica.mp3" type="audio/mp3">
+    </audio>
+    
+    <script>
+        // Elementos do jogo
+        const yani = document.getElementById('yani');
+        const gameContainer = document.getElementById('game-container');
+        const scoreElement = document.getElementById('score');
+        const gameOverScreen = document.getElementById('game-over');
+        const winMessage = document.getElementById('win-message');
+        const restartBtn = document.getElementById('restart-btn');
+        const continueBtn = document.getElementById('continue-btn');
+        const audioControl = document.getElementById('audio-control');
+        const bgMusic = document.getElementById('bg-music');
+        const motivationalMessage = document.getElementById('motivational-message');
+        
+        // Variáveis do jogo
+        let isJumping = false;
+        let isGameOver = false;
+        let score = 0;
+        let obstacles = [];
+        let gameSpeed = 5;
+        let musicEnabled = true;
+        let gameInterval;
+        let obstacleInterval;
+        
+        // Mensagens motivacionais
+        const motivationalMessages = [
+            "NÃO DESISTA, VOCÊ É MUITA FODA E VAI CONSEGUIR ❤",
+            "sabia que se tu chegar nos 10K metros o jogo acaba?"
+        ];
+        
+        // Configurações
+        const JUMP_HEIGHT = 150;
+        const JUMP_DURATION = 800;
+        const OBSTACLE_INTERVAL = 2000;
+        const WIN_SCORE = 10000;
+        
+        // Iniciar música
+        bgMusic.volume = 0.3;
+        
+        // Controle de áudio
+        audioControl.addEventListener('click', () => {
+            musicEnabled = !musicEnabled;
+            if (musicEnabled) {
+                bgMusic.play();
+                audioControl.textContent = '🔊 Desligar Som';
+            } else {
+                bgMusic.pause();
+                audioControl.textContent = '🔊 Ligar Som';
+            }
+        });
+        
+        // Iniciar jogo
+        function startGame() {
+            // Limpar intervalos anteriores
+            clearInterval(obstacleInterval);
+            cancelAnimationFrame(gameInterval);
+            
+            // Resetar estado do jogo
+            isGameOver = false;
+            score = 0;
+            gameSpeed = 5;
+            
+            // Remover obstáculos antigos
+            obstacles.forEach(obstacle => obstacle.element.remove());
+            obstacles = [];
+            
+            // Resetar posição do Yani
+            yani.style.bottom = '20px';
+            yani.style.transform = 'scale(1)';
+            
+            // Esconder telas de game over/vitória
+            gameOverScreen.style.display = 'none';
+            winMessage.style.display = 'none';
+            
+            // Atualizar pontuação
+            scoreElement.textContent = '0m';
+            
+            // Iniciar música
+            if (musicEnabled) {
+                bgMusic.currentTime = 0;
+                bgMusic.play().catch(e => console.log("Erro ao reproduzir música:", e));
+            }
+            
+            // Gerar obstáculos
+            obstacleInterval = setInterval(createObstacle, OBSTACLE_INTERVAL);
+            
+            // Loop do jogo
+            gameLoop();
+            
+            // Adicionar eventos de controle (apenas uma vez)
+            gameContainer.onclick = jump;
+            document.onkeydown = (e) => {
+                if (e.code === 'Space') jump();
+            };
+        }
+        
+        // Loop principal do jogo
+        function gameLoop() {
+            if (isGameOver) return;
+            
+            updateScore();
+            updateObstacles();
+            checkCollisions();
+            
+            gameInterval = requestAnimationFrame(gameLoop);
+        }
+        
+        // Pular
+        function jump() {
+            if (isJumping || isGameOver) return;
+            
+            isJumping = true;
+            let startTime = null;
+            
+            function animateJump(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const progress = (timestamp - startTime) / JUMP_DURATION;
+                
+                if (progress < 0.5) {
+                    // Subida
+                    const jumpHeight = JUMP_HEIGHT * (progress * 2);
+                    yani.style.bottom = `${20 + jumpHeight}px`;
+                } else {
+                    // Descida
+                    const fallHeight = JUMP_HEIGHT * ((progress - 0.5) * 2);
+                    yani.style.bottom = `${20 + JUMP_HEIGHT - fallHeight}px`;
+                }
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animateJump);
+                } else {
+                    yani.style.bottom = '20px';
+                    isJumping = false;
+                }
+            }
+            
+            requestAnimationFrame(animateJump);
+        }
+        
+        // Criar obstáculo
+        function createObstacle() {
+            if (isGameOver) return;
+            
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle';
+            
+            // Altura aleatória do obstáculo
+            const height = Math.floor(Math.random() * 100) + 50;
+            obstacle.style.height = `${height}px`;
+            
+            obstacle.style.right = '-30px';
+            gameContainer.appendChild(obstacle);
+            
+            obstacles.push({
+                element: obstacle,
+                passed: false
+            });
+        }
+        
+        // Atualizar obstáculos
+        function updateObstacles() {
+            obstacles.forEach((obstacle, index) => {
+                const currentRight = parseInt(obstacle.element.style.right);
+                const newRight = currentRight + gameSpeed;
+                obstacle.element.style.right = `${newRight}px`;
+                
+                // Verificar se o jogador passou pelo obstáculo
+                if (!obstacle.passed && newRight < parseInt(yani.style.left)) {
+                    obstacle.passed = true;
+                    score += 100;
+                }
+                
+                // Remover obstáculo quando sair da tela
+                if (newRight > window.innerWidth) {
+                    obstacle.element.remove();
+                    obstacles.splice(index, 1);
+                }
+            });
+        }
+        
+        // Verificar colisões
+        function checkCollisions() {
+            const yaniRect = yani.getBoundingClientRect();
+            
+            obstacles.forEach(obstacle => {
+                const obstacleRect = obstacle.element.getBoundingClientRect();
+                
+                if (
+                    yaniRect.right > obstacleRect.left &&
+                    yaniRect.left < obstacleRect.right &&
+                    yaniRect.bottom > obstacleRect.top
+                ) {
+                    // Efeito visual de colisão
+                    yani.style.transform = 'scale(1.2)';
+                    setTimeout(() => {
+                        yani.style.transform = 'scale(1)';
+                    }, 100);
+                    
+                    gameOver();
+                }
+            });
+        }
+        
+        // Atualizar pontuação
+        function updateScore() {
+            score += 1;
+            scoreElement.textContent = `${score}m`;
+            
+            // Aumentar dificuldade
+            if (score % 500 === 0) {
+                gameSpeed += 0.5;
+            }
+            
+            // Verificar vitória
+            if (score >= WIN_SCORE && !isGameOver) {
+                winGame();
+            }
+        }
+        
+        // Game over
+        function gameOver() {
+            if (isGameOver) return;
+            
+            isGameOver = true;
+            
+            // Selecionar mensagem motivacional aleatória
+            const randomMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+            motivationalMessage.textContent = randomMessage;
+            
+            // Mostrar tela de game over
+            gameOverScreen.style.display = 'block';
+            
+            // Parar música
+            bgMusic.pause();
+            
+            // Parar animações
+            cancelAnimationFrame(gameInterval);
+        }
+        
+        // Vitória
+        function winGame() {
+            isGameOver = true;
+            winMessage.style.display = 'block';
+            bgMusic.pause();
+            cancelAnimationFrame(gameInterval);
+        }
+        
+        // Eventos dos botões
+        restartBtn.onclick = startGame; // Usando onclick para evitar múltiplos listeners
+        continueBtn.onclick = () => {
+            winMessage.style.display = 'none';
+            isGameOver = false;
+            if (musicEnabled) bgMusic.play();
+            gameLoop();
+        };
+        
+        // Iniciar o jogo quando a página carregar
+        window.addEventListener('load', () => {
+            // Tentar reproduzir música automaticamente
+            const playMusic = () => {
+                if (musicEnabled) {
+                    bgMusic.play().catch(e => {
+                        console.log("Reprodução automática bloqueada. O usuário precisa interagir primeiro.");
+                    });
+                }
+            };
+            
+            // Primeira tentativa
+            playMusic();
+            
+            // Configurar evento para permitir áudio após interação do usuário
+            document.addEventListener('click', () => {
+                playMusic();
+            }, { once: true });
+            
+            startGame();
+        });
+    </script>
+</body>
+</html>
