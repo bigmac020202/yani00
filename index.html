@@ -155,6 +155,8 @@
             cursor: pointer;
             z-index: 30;
             font-size: 4vmin;
+            -webkit-user-select: none;
+            user-select: none;
         }
         
         #jump-btn {
@@ -176,6 +178,8 @@
             font-size: 5vmin;
             font-weight: bold;
             touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
         }
         
         @media (max-height: 500px) {
@@ -293,17 +297,26 @@
         // Iniciar música
         bgMusic.volume = 0.3;
         
-        // Controle de áudio
-        audioControl.addEventListener('click', () => {
+        // Função para alternar o som
+        function toggleMusic() {
             musicEnabled = !musicEnabled;
             if (musicEnabled) {
-                bgMusic.play();
+                bgMusic.play().catch(e => console.log("Erro ao reproduzir música:", e));
                 audioControl.textContent = '🔊';
+                localStorage.setItem('musicEnabled', 'true');
             } else {
                 bgMusic.pause();
                 audioControl.textContent = '🔇';
+                localStorage.setItem('musicEnabled', 'false');
             }
-        });
+        }
+        
+        // Controle de áudio com touch melhorado
+        audioControl.addEventListener('click', toggleMusic);
+        audioControl.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            toggleMusic();
+        }, { passive: false });
         
         // Função para limpar completamente o jogo
         function resetGame() {
@@ -341,7 +354,7 @@
         function startGame() {
             resetGame();
             
-            // Iniciar música
+            // Iniciar música se estiver habilitada
             if (musicEnabled) {
                 bgMusic.currentTime = 0;
                 bgMusic.play().catch(e => console.log("Erro ao reproduzir música:", e));
@@ -497,9 +510,26 @@
             cancelAnimationFrame(gameInterval);
         }
         
-        // Eventos dos botões
-        restartBtn.addEventListener('click', startGame);
-        continueBtn.addEventListener('click', () => {
+        // Eventos dos botões com touch melhorado
+        function setupButton(button, action) {
+            // Remove event listeners antigos
+            button.removeEventListener('click', action);
+            button.removeEventListener('touchstart', touchHandler);
+            
+            // Adiciona novos listeners
+            button.addEventListener('click', action);
+            
+            // Handler especial para touch
+            function touchHandler(e) {
+                e.preventDefault();
+                action();
+            }
+            button.addEventListener('touchstart', touchHandler, { passive: false });
+        }
+        
+        // Configurar botões
+        setupButton(restartBtn, startGame);
+        setupButton(continueBtn, () => {
             winMessage.style.display = 'none';
             isGameOver = false;
             if (musicEnabled) bgMusic.play();
@@ -508,10 +538,17 @@
         
         // Controles mobile
         jumpBtn.addEventListener('click', jump);
-        gameContainer.addEventListener('touchstart', (e) => {
+        jumpBtn.addEventListener('touchstart', function(e) {
             e.preventDefault();
             jump();
-        });
+        }, { passive: false });
+        
+        gameContainer.addEventListener('touchstart', (e) => {
+            if (e.target === gameContainer) {
+                e.preventDefault();
+                jump();
+            }
+        }, { passive: false });
         
         // Controle por teclado (para desktop)
         document.addEventListener('keydown', (e) => {
@@ -521,8 +558,26 @@
             }
         });
         
+        // Gerenciamento de visibilidade da página
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // Página oculta - pausar música
+                bgMusic.pause();
+            } else if (musicEnabled && !isGameOver) {
+                // Página visível - retomar música se estiver habilitada
+                bgMusic.play().catch(e => console.log("Erro ao retomar música:", e));
+            }
+        });
+        
         // Iniciar o jogo automaticamente
         window.addEventListener('load', () => {
+            // Carregar preferência de música do localStorage
+            const savedMusicPref = localStorage.getItem('musicEnabled');
+            if (savedMusicPref !== null) {
+                musicEnabled = savedMusicPref === 'true';
+                audioControl.textContent = musicEnabled ? '🔊' : '🔇';
+            }
+            
             // Forçar redimensionamento inicial
             setTimeout(() => {
                 window.dispatchEvent(new Event('resize'));
