@@ -279,15 +279,6 @@
         let gameInterval;
         let obstacleInterval;
         
-        // Mensagens motivacionais
-        const motivationalMessages = [
-            "NÃO DESISTA, VOCÊ É INCRÍVEL! ❤",
-            "CADA TENTATIVA TE DEIXA MAIS FORTE! 💪",
-            "VOCÊ CONSEGUE! TENTE DE NOVO! ✨",
-            "O IMPORTANTE É NÃO PARAR DE TENTAR! 🚀",
-            "HOJE É SEU DIA! VOCÊ VAI CONSEGUIR! 🌈"
-        ];
-        
         // Configurações
         const JUMP_HEIGHT = 180;
         const JUMP_DURATION = 800;
@@ -493,9 +484,8 @@
             
             isGameOver = true;
             
-            // Mensagem motivacional aleatória
-            motivationalMessage.textContent = 
-                motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+            // Mensagem fixa (única)
+            motivationalMessage.textContent = "Não desista, você é muita foda e vai conseguir ❤";
             
             gameOverScreen.style.display = 'block';
             bgMusic.pause();
