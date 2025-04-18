@@ -59,15 +59,15 @@
         }
         
         .high-obstacle {
-            height: 80px;
+            height: 100px;
         }
         
         .medium-obstacle {
-            height: 50px;
+            height: 70px;
         }
         
         .low-obstacle {
-            height: 30px;
+            height: 40px;
         }
         
         #score {
@@ -179,7 +179,7 @@
         let isGameOver = false;
         let score = 0;
         let obstacles = [];
-        let gameSpeed = 3; // Velocidade reduzida
+        let gameSpeed = 3;
         let musicEnabled = true;
         let gameInterval;
         let obstacleInterval;
@@ -193,11 +193,11 @@
             "HOJE É SEU DIA! VOCÊ VAI CONSEGUIR! 🌈"
         ];
         
-        // Configurações
-        const JUMP_HEIGHT = 120; // Pulo mais baixo
-        const JUMP_DURATION = 700;
-        const OBSTACLE_INTERVAL = 2200; // Intervalo maior entre obstáculos
-        const WIN_SCORE = 5000; // Meta reduzida para 5000m
+        // Configurações - PULO AUMENTADO
+        const JUMP_HEIGHT = 180; // Aumentado de 120 para 180
+        const JUMP_DURATION = 800;
+        const OBSTACLE_INTERVAL = 2200;
+        const WIN_SCORE = 5000;
         
         // Iniciar música
         bgMusic.volume = 0.3;
@@ -270,7 +270,7 @@
             gameInterval = requestAnimationFrame(gameLoop);
         }
         
-        // Pular
+        // Pular - AGORA MAIS ALTO
         function jump() {
             if (isJumping || isGameOver) return;
             
@@ -309,7 +309,7 @@
             const obstacle = document.createElement('div');
             obstacle.className = 'obstacle';
             
-            // Tipos de obstáculos (baixo, médio, alto)
+            // Tipos de obstáculos (todos podem ser pulados agora)
             const obstacleTypes = ['low-obstacle', 'medium-obstacle', 'high-obstacle'];
             const randomType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
             obstacle.classList.add(randomType);
@@ -335,8 +335,8 @@
                 if (!obstacle.passed && newRight < parseInt(yani.style.left)) {
                     obstacle.passed = true;
                     // Dar mais pontos para obstáculos mais altos
-                    score += obstacle.type === 'high-obstacle' ? 150 : 
-                            obstacle.type === 'medium-obstacle' ? 100 : 50;
+                    score += obstacle.type === 'high-obstacle' ? 200 : 
+                            obstacle.type === 'medium-obstacle' ? 150 : 100;
                 }
                 
                 // Remover obstáculo quando sair da tela
@@ -347,16 +347,16 @@
             });
         }
         
-        // Verificar colisões
+        // Verificar colisões - AGORA SÓ COLIDE SE NÃO PULAR
         function checkCollisions() {
+            if (isJumping) return; // Não colide enquanto estiver pulando
+            
             const yaniRect = yani.getBoundingClientRect();
             
             obstacles.forEach(obstacle => {
                 const obstacleRect = obstacle.element.getBoundingClientRect();
                 
-                // Só colide se o obstáculo for alto demais para pular
-                if (obstacle.type === 'high-obstacle' &&
-                    yaniRect.right > obstacleRect.left &&
+                if (yaniRect.right > obstacleRect.left &&
                     yaniRect.left < obstacleRect.right &&
                     yaniRect.bottom > obstacleRect.top) {
                     gameOver();
